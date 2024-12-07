@@ -14,6 +14,7 @@ connectDB();
 app.use(express.json());
 app.use(cors());
 app.use(errorMiddleware);
+// app.use(hashPassword(userModel.password))
 
 const PORT = process.env.PORT;
 app.get("/", (req, res) => {
@@ -35,11 +36,14 @@ app.post("/register", async (req, res, next) => {
         message: "Email already existed.",
       });
     }
+    //hash password
     const User = await userModel.create({ name, email, password });
-    res.send({ message: "User created sucessfully", User });
+    //token
+    const token = User.createJWT();
+    res.send({ message: "User created sucessfully", User, token });
   } catch (error) {
     next(error);
-  } 
+  }
 });
 
 app.listen(PORT, () => {
