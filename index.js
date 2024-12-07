@@ -39,7 +39,7 @@ app.post("/register", async (req, res, next) => {
     res.send({ message: "User created sucessfully", User });
   } catch (error) {
     next(error);
-  }
+  } 
 });
 
 app.listen(PORT, () => {
