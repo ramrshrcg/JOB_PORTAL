@@ -46,6 +46,28 @@ app.post("/register", async (req, res, next) => {
   }
 });
 
+app.post("/login", async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    res.send({ message: "Enter email and password" });
+  }
+  const user = await userModel.findOne({ email });
+  if (!user) {
+    res.status(400).json({ message: "wrong email" });
+  }
+  const isMatch = await user.comparePassword(password);
+  if (!isMatch) {
+    res.status(400).json({ message: "wrong password" });
+  }
+  user.password= undefined// it is done to hide password from log to make secure
+  const token = user.createJWT()
+  res.status(200).json({
+    message:"Login Sucessful ",
+    user,
+    token,
+  })
+});
+
 app.listen(PORT, () => {
   console.log(`server is running on ${process.env.DEV_MODE} port ${PORT}`);
 });
