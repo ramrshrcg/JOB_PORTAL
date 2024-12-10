@@ -18,7 +18,7 @@ app.use(errorMiddleware);
 // app.use(hashPassword(userModel.password))
 
 const PORT = process.env.PORT;
-app.get("/",userAuth,(req, res) => {
+app.get("/", userAuth, (req, res) => {
   res.send("<h1welcome to job portal</h1>");
 });
 
@@ -60,14 +60,70 @@ app.post("/login", async (req, res) => {
   if (!isMatch) {
     res.status(400).json({ message: "wrong password" });
   }
-  user.password= undefined// it is done to hide password from log to make secure
-  const token = user.createJWT()
-  res.status(200).json({  
-    message:"Login Sucessful ",
+  user.password = undefined; // it is done to hide password from log to make secure
+  const token = user.createJWT();
+  res.status(200).json({
+    message: "Login Sucessful ",
     user,
     token,
-  })
+  });
 });
+/*
+app.put("/update", userAuth, async (req, res) => {
+  const { email, name, lastName, phoneNo } = req.body;
+  try {
+     const user = await userModel.findOne({ _id: req.user.userId });
+    // const user = await userModel.find();
+    
+
+    console.log(user);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Update user fields conditionally
+
+    
+
+    // if (password) {
+    //   user.password = await bcrypt.hash(password, 10);
+    //   }
+    await user.save();
+    const token = user.createJWT();
+    res.status(200).json({ message: "User updated successfully", user, token });
+  } catch {
+    res.status(400).json({ message: "Error in updating user" });
+  }
+});
+
+*/
+
+app.put("/update", userAuth, async (req, res) => {
+  //can update by searching name
+  const { name, newname, email, lastName, phoneNo } = req.body;
+  const user = await userModel.findOne({ name });
+  // const user = await userModel.findOne({ email });
+  console.log(user);
+  if (!user) {
+    return res.status(404).json({ message: "User not found" });
+  }
+
+  //update
+  if (newname) {
+    user.name = newname;
+  }
+  if (email) user.email = email;
+  if (lastName) user.lastName = lastName;
+  if (phoneNo) user.phoneNo = phoneNo;
+
+  await user.save();
+  const token = user.createJWT()
+
+  res.status(200).json({
+    message:"sucessful",
+    user, token
+  })
+})
 
 app.listen(PORT, () => {
   console.log(`server is running on ${process.env.DEV_MODE} port ${PORT}`);
