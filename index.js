@@ -6,6 +6,7 @@ import cors from "cors";
 import connectDB from "./config/mongodb.js";
 import userModel from "./models/userModel.js";
 import errorMiddleware from "./middleware/errorMiddleware.js";
+import userAuth from "./middleware/userAuth.js";
 
 dotenv.config();
 const app = express();
@@ -17,7 +18,7 @@ app.use(errorMiddleware);
 // app.use(hashPassword(userModel.password))
 
 const PORT = process.env.PORT;
-app.get("/", (req, res) => {
+app.get("/",userAuth,(req, res) => {
   res.send("<h1welcome to job portal</h1>");
 });
 
@@ -61,7 +62,7 @@ app.post("/login", async (req, res) => {
   }
   user.password= undefined// it is done to hide password from log to make secure
   const token = user.createJWT()
-  res.status(200).json({
+  res.status(200).json({  
     message:"Login Sucessful ",
     user,
     token,
