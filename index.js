@@ -175,8 +175,9 @@ app.patch("/update/:id", userAuth, async (req, res) => {
 
   if (!req.user.userId === job.createdBy.toString()) {
     res.status(400).json({
-      message: "you are not authorized to update this job ",
+      message: "you are not authorized to update this job",
     });
+    
   }
   const updatejob = await jobModel.findByIdAndUpdate({ _id: id }, req.body, {
     new: true,
