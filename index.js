@@ -1,20 +1,21 @@
 //import
 import express from "express";
 import dotenv from "dotenv";
-import cors from "cors";
+// import cors from "cors";
 //import
 import connectDB from "./config/mongodb.js";
 import userModel from "./models/userModel.js";
-import errorMiddleware from "./middleware/errorMiddleware.js";
+// import errorMiddleware from "./middleware/errorMiddleware.js";
 import userAuth from "./middleware/userAuth.js";
+import jobModel from "./models/jobModel.js";
 
 dotenv.config();
 const app = express();
 
 connectDB();
 app.use(express.json());
-app.use(cors());
-app.use(errorMiddleware);
+// app.use(cors());
+// app.use(errorMiddleware);
 // app.use(hashPassword(userModel.password))
 
 const PORT = process.env.PORT;
@@ -22,6 +23,7 @@ app.get("/", userAuth, (req, res) => {
   res.send("<h1welcome to job portal</h1>");
 });
 
+//user
 app.post("/register", async (req, res, next) => {
   try {
     const { name, email, password } = req.body;
@@ -37,10 +39,10 @@ app.post("/register", async (req, res, next) => {
         message: "Email already existed.",
       });
     }
-    //hash password
+
     const User = await userModel.create({ name, email, password });
     //token
-    const token = User.createJWT();
+    const token = User.createJWT(); //i dont think it makes any sense
     res.send({ message: "User created sucessfully", User, token });
   } catch (error) {
     next(error);
@@ -56,7 +58,10 @@ app.post("/login", async (req, res) => {
   if (!user) {
     res.status(400).json({ message: "wrong email" });
   }
+  console.log(user.password);
+
   const isMatch = await user.comparePassword(password);
+  // console.log(isMatch);
   if (!isMatch) {
     res.status(400).json({ message: "wrong password" });
   }
@@ -68,6 +73,7 @@ app.post("/login", async (req, res) => {
     token,
   });
 });
+
 /*
 app.put("/update", userAuth, async (req, res) => {
   const { email, name, lastName, phoneNo } = req.body;
@@ -100,30 +106,84 @@ app.put("/update", userAuth, async (req, res) => {
 
 app.put("/update", userAuth, async (req, res) => {
   //can update by searching name
-  const { name, newname, email, lastName, phoneNo } = req.body;
-  const user = await userModel.findOne({ name });
-  // const user = await userModel.findOne({ email });
-  console.log(user);
+  const { name, email, lastName, phoneNo, password } = req.body;
+
+  const user = await userModel.findOne({ _id: req.user.userId });
+
   if (!user) {
     return res.status(404).json({ message: "User not found" });
   }
-
-  //update
-  if (newname) {
-    user.name = newname;
-  }
+  if (name) user.name = name;
   if (email) user.email = email;
   if (lastName) user.lastName = lastName;
   if (phoneNo) user.phoneNo = phoneNo;
+  if (password) user.password = password;
 
   await user.save();
-  const token = user.createJWT()
+  const token = user.createJWT();
+  // console.log(user);
 
   res.status(200).json({
-    message:"sucessful",
-    user, token
-  })
-})
+    message: "sucessful",
+    user,
+    token,
+  });
+});
+
+// app.get("/protected", userAuth, (req, res) => {
+//   // req.user contains { userId: '...' }
+//   console.log(req.user.userId);
+//   res.status(200).json({ message: "Access granted" });
+// });
+
+//job
+
+app.post("/createjobs", userAuth, async (req, res) => {
+  const { company, position } = req.body;
+  if (!company || !position) {
+    next("Please Provide All Fields");
+  }
+
+  req.body.createdBy = req.user.userId;
+
+  const job = await jobModel.create(req.body);
+  res.status(200).json({ message: "job created sucessfully", job });
+});
+
+app.get("/getjobs", userAuth, async (req, res) => {
+  const jobs = await jobModel.find();
+
+  res.status(200).json({
+    totoalJobs: jobs.length,
+    message: "jobs fetched sucessfully",
+    jobs,
+  });
+});
+
+app.patch("/update/:id", userAuth, async (req, res) => {
+  const id = req.params.id;
+  const { company, position } = req.body;
+  if (!company || !position) {
+    res.status(400).json({ message: "send all the parameters" });
+  }
+  const job = await jobModel.findOne({ _id: id });
+  if (!job) {
+    res.status(400).json({
+      message: `no job found with this ${id}`,
+    });
+  }
+
+  if (!req.user.userId === job.createdBy.toString()) {
+    res.status(400).json({
+      message: "you are not authorized to update this job ",
+    });
+  }
+  const updatejob = await jobModel.findByIdAndUpdate({ _id: id }, req.body, {
+    new: true,
+    runValidators: true,
+  });
+  res.status(200).json({ message: "job updated sucessfully", updatejob });
+});
 
 app.listen(PORT, () => {
   console.log(`server is running on ${process.env.DEV_MODE} port ${PORT}`);
