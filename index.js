@@ -160,7 +160,7 @@ app.get("/getjobs", userAuth, async (req, res) => {
   });
 });
 
-app.patch("/update/:id", userAuth, async (req, res) => {
+app.patch("/update_job/:id", userAuth, async (req, res) => {
   const id = req.params.id;
   const { company, position } = req.body;
   if (!company || !position) {
@@ -177,13 +177,43 @@ app.patch("/update/:id", userAuth, async (req, res) => {
     res.status(400).json({
       message: "you are not authorized to update this job",
     });
-    
   }
   const updatejob = await jobModel.findByIdAndUpdate({ _id: id }, req.body, {
     new: true,
     runValidators: true,
   });
   res.status(200).json({ message: "job updated sucessfully", updatejob });
+});
+
+app.delete("/delete_job/:id", userAuth, async (req, res) => {
+  // const id =req.params.id;
+  // jobModel.findByIdAndDelete(id).then((result)=>
+  //   {
+  //     res.status(200).json({message:"job deleted sucessfully"})
+  //     }).catch((err)=>
+  //       {
+  //         res.status(400).json({message:err})
+  //         })
+
+  const { id } = req.params;
+  const job = await jobModel.findOne({ _id: id });
+
+  if (!job) {
+    res.status(400).json({
+      message: `no job found  with ${id}`,
+    });
+  }
+  if (!req.params.userId===job.createdBy.toString())
+  {
+    res.status(400).json({
+      message:"U cannot delete this job"
+    })
+  }
+
+  await job.deleteOne();
+  res.status(200).json({
+    message: "Job deleted",
+  });
 });
 
 app.listen(PORT, () => {
