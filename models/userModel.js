@@ -53,7 +53,7 @@ userSchema.methods.createJWT = function () {
       userID: this._id,
     },
     process.env.SECRET,
-    { expiresIn: "1d" }
+    { expiresIn: "10d" }
   );
 };
 

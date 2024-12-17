@@ -58,7 +58,7 @@ app.post("/login", async (req, res) => {
   if (!user) {
     res.status(400).json({ message: "wrong email" });
   }
-  console.log(user.password);
+  // console.log(user.password);
 
   const isMatch = await user.comparePassword(password);
   // console.log(isMatch);
