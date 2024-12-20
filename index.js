@@ -8,6 +8,8 @@ import userModel from "./models/userModel.js";
 // import errorMiddleware from "./middleware/errorMiddleware.js";
 import userAuth from "./middleware/userAuth.js";
 import jobModel from "./models/jobModel.js";
+import mongoose from "mongoose";
+import moment from "moment/moment.js";
 
 dotenv.config();
 const app = express();
@@ -20,7 +22,7 @@ app.use(express.json());
 
 const PORT = process.env.PORT;
 app.get("/", userAuth, (req, res) => {
-  res.send("<h1welcome to job portal</h1>");
+  res.send("<h1>welcome to job portal</h1>");
 });
 
 //user
@@ -151,7 +153,31 @@ app.post("/createjobs", userAuth, async (req, res) => {
 });
 
 app.get("/getjobs", userAuth, async (req, res) => {
-  const jobs = await jobModel.find();
+  //search by query
+  const { status, workType, search, sort } = req.query;
+
+  const queryObject = {
+    createdBy: req.user.userId,
+  };
+
+  if (status && status !== "all") {
+    queryObject.status = status;
+  }
+  if (workType && workType !== "all") {
+    queryObject.workType = workType;
+  }
+  if (search) {
+    queryObject.position = { $regex: search, $options: "i" };
+  }
+
+  let queryResult = await jobModel.find(queryObject);
+  
+   
+  const jobs = queryResult;
+
+  
+
+  // const jobs = await jobModel.find();
 
   res.status(200).json({
     totoalJobs: jobs.length,
@@ -203,17 +229,107 @@ app.delete("/delete_job/:id", userAuth, async (req, res) => {
       message: `no job found  with ${id}`,
     });
   }
-  if (!req.params.userId===job.createdBy.toString())
-  {
+  if (!req.params.userId === job.createdBy.toString()) {
     res.status(400).json({
-      message:"U cannot delete this job"
-    })
+      message: "U cannot delete this job",
+    });
   }
 
   await job.deleteOne();
   res.status(200).json({
     message: "Job deleted",
   });
+});
+
+app.get("/job_stats", userAuth, async (req, res) => {
+  const stats = await jobModel.aggregate([
+    {
+      $match: {
+        createdBy: req.user.userId.toString,
+      },
+    },
+    {
+      $group: {
+        _id: "$workType",
+        company: { $push: "$company" },
+      },
+    },
+  ]);
+
+  const defaultStats = {
+    pending: stats.pending || 0,
+    reject: stats.reject || 0,
+    interview: stats.interview || 0,
+  };
+
+  let monthlyStats = await jobModel.aggregate([
+    {
+      $match: {
+        createdBy: req.user.userId.toString,
+      },
+    },
+    {
+      $group: {
+        _id: {
+          year: { $year: "$createdAt" },
+          month: { $month: "$createdAt" },
+        },
+        count: { $sum: 1 },
+      },
+    },
+  ]);
+  monthlyStats = monthlyStats
+    .map((items) => {
+      const {
+        _id: { year, month },
+        count,
+      } = items;
+      const date = moment(`${year}-${month}`, "YYYY-MM").format("YYYY-MM");
+      return { date, count };
+    })
+    .reverse();
+  res.status(200).json({
+    totlaJob: stats.length,
+
+    //  defaultStats,
+    // monthlyStats,
+    stats,
+  });
+});
+
+app.get("/job_stats_filter", userAuth, async (req, res) => {
+  try {
+    // const { jobType } = req.query; // Retrieve jobType from query parameters
+    const jobType = "full-time";
+    const createdBy = req.user.userId;
+    // console.log(jobType,createdBy);
+
+    // Aggregation pipeline
+    const jobs = await jobModel.aggregate([
+      {
+        $match: {
+          createdBy: createdBy.toString,
+          workType: jobType, // Filter jobs by jobType
+        },
+      },
+      {
+        $project: {
+          _id: "$company",
+          // jobType: "$workType",
+          position: "$position",
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    res.status(200).json({
+      message: `Jobs of type  fetched successfully`,
+      totlaJob: jobs.length,
+      jobs,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching jobs", error });
+  }
 });
 
 app.listen(PORT, () => {
