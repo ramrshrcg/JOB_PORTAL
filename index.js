@@ -171,7 +171,19 @@ app.get("/getjobs", userAuth, async (req, res) => {
   }
 
   let queryResult = await jobModel.find(queryObject);
-  
+
+if (sort === "latest") {
+  queryResult = queryResult.sort((a, b) => b.createdAt - a.createdAt);
+}
+if (sort === "oldest") {
+  queryResult = queryResult.sort((a, b) => a.createdAt - b.createdAt);
+}
+if (sort === "a-z") {
+  queryResult = queryResult.sort((a, b) => a.position.localeCompare(b.position));
+}
+if (sort === "z-a") {
+  queryResult = queryResult.sort((a, b) => b.position.localeCompare(a.position));
+}
    
   const jobs = queryResult;
 
