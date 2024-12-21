@@ -172,22 +172,24 @@ app.get("/getjobs", userAuth, async (req, res) => {
 
   let queryResult = await jobModel.find(queryObject);
 
-if (sort === "latest") {
-  queryResult = queryResult.sort((a, b) => b.createdAt - a.createdAt);
-}
-if (sort === "oldest") {
-  queryResult = queryResult.sort((a, b) => a.createdAt - b.createdAt);
-}
-if (sort === "a-z") {
-  queryResult = queryResult.sort((a, b) => a.position.localeCompare(b.position));
-}
-if (sort === "z-a") {
-  queryResult = queryResult.sort((a, b) => b.position.localeCompare(a.position));
-}
-   
-  const jobs = queryResult;
+  if (sort === "latest") {
+    queryResult = queryResult.sort((a, b) => b.createdAt - a.createdAt);
+  }
+  if (sort === "oldest") {
+    queryResult = queryResult.sort((a, b) => a.createdAt - b.createdAt);
+  }
+  if (sort === "a-z") {
+    queryResult = queryResult.sort((a, b) =>
+      a.position.localeCompare(b.position)
+    );
+  }
+  if (sort === "z-a") {
+    queryResult = queryResult.sort((a, b) =>
+      b.position.localeCompare(a.position)
+    );
+  }
 
-  
+  const jobs = queryResult;
 
   // const jobs = await jobModel.find();
 
@@ -345,5 +347,5 @@ app.get("/job_stats_filter", userAuth, async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`server is running on ${process.env.DEV_MODE} port ${PORT}`);
+  console.log(`server is running on `);
 });
