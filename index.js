@@ -21,7 +21,7 @@ app.use(express.json());
 // app.use(hashPassword(userModel.password))
 
 const PORT = process.env.PORT||8080;
-app.get("/", userAuth, (req, res) => {
+app.get("/", (req, res) => {
   res.send("<h1>welcome to job portal</h1>");
 });
 
