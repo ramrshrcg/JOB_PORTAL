@@ -1,7 +1,7 @@
 //import
-import express from "express";
+import express, { response } from "express";
 import dotenv from "dotenv";
-// import cors from "cors";
+import cors from "cors";
 //import
 import connectDB from "./config/mongodb.js";
 import userModel from "./models/userModel.js";
@@ -16,7 +16,7 @@ const app = express();
 
 connectDB();
 app.use(express.json());
-// app.use(cors());
+app.use(cors());
 // app.use(errorMiddleware);
 // app.use(hashPassword(userModel.password))
 
@@ -65,7 +65,10 @@ app.post("/login", async (req, res) => {
   const isMatch = await user.comparePassword(password);
   // console.log(isMatch);
   if (!isMatch) {
-    res.status(400).json({ message: "wrong password" });
+    res.status(400).json({ message: "wrong password" ,
+      status:400,
+    });
+    return;
   }
   user.password = undefined; // it is done to hide password from log to make secure
   const token = user.createJWT();
@@ -73,6 +76,7 @@ app.post("/login", async (req, res) => {
     message: "Login Sucessful ",
     user,
     token,
+    status:200
   });
 });
 
@@ -152,6 +156,54 @@ app.post("/createjobs", userAuth, async (req, res) => {
   res.status(200).json({ message: "job created sucessfully", job });
 });
 
+
+app.get("/getalljobs", async (req, res) => {
+  //search by query
+  const { status, workType, search, sort } = req.query;
+
+  // const queryObject = {
+  //   createdBy: req.user.userId,
+  // };
+
+  if (status && status !== "all") {
+    queryObject.status = status;
+  }
+  if (workType && workType !== "all") {
+    queryObject.workType = workType;
+  }
+  if (search) {
+    queryObject.position = { $regex: search, $options: "i" };
+  }
+
+  let queryResult = await jobModel.find(queryObject);
+
+  if (sort === "latest") {
+    queryResult = queryResult.sort((a, b) => b.createdAt - a.createdAt);
+  }
+  if (sort === "oldest") {
+    queryResult = queryResult.sort((a, b) => a.createdAt - b.createdAt);
+  }
+  if (sort === "a-z") {
+    queryResult = queryResult.sort((a, b) =>
+      a.position.localeCompare(b.position)
+    );
+  }
+  if (sort === "z-a") {
+    queryResult = queryResult.sort((a, b) =>
+      b.position.localeCompare(a.position)
+    );
+  }
+
+  const jobs = queryResult;
+
+  // const jobs = await jobModel.find();
+
+  res.status(200).json({
+    totoalJobs: jobs.length,
+    message: "jobs fetched sucessfully",
+    jobs,
+  });
+});
 app.get("/getjobs", userAuth, async (req, res) => {
   //search by query
   const { status, workType, search, sort } = req.query;
@@ -347,5 +399,5 @@ app.get("/job_stats_filter", userAuth, async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`server is running on `);
+  console.log(`server is running on ${PORT}`);
 });
