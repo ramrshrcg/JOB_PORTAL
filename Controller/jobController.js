@@ -102,7 +102,7 @@ class jobController {
         message: `no job found  with ${id}`,
       });
     }
-    if (!req.params.userId === job.createdBy.toString()) {
+    if (!req.params.userId === job?.createdBy.toString()) {
       res.status(400).json({
         message: "U cannot delete this job",
       });
