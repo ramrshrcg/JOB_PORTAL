@@ -8,8 +8,11 @@ import userModel from "./models/userModel.js";
 // import errorMiddleware from "./middleware/errorMiddleware.js";
 import userAuth from "./middleware/userAuth.js";
 import jobModel from "./models/jobModel.js";
-import mongoose from "mongoose";
+// import mongoose from "mongoose";
 import moment from "moment/moment.js";
+//import routes
+import home from "./Routes/home.js";
+import {loginRoute, registerRoute, updateRoute} from "./Routes/userRoute.js";
 
 dotenv.config();
 const app = express();
@@ -20,65 +23,17 @@ app.use(cors());
 // app.use(errorMiddleware);
 // app.use(hashPassword(userModel.password))
 
-const PORT = process.env.PORT||8080;
-app.get("/", (req, res) => {
-  res.send("<h1>welcome to job portal</h1>");
-});
+const PORT = process.env.PORT || 8080;
+//home
+app.use('/',home)
 
 //user
-app.post("/register", async (req, res, next) => {
-  try {
-    const { name, email, password } = req.body;
-    // check if nanem enmail or password is entered or not
-    if (!name || !email || !password) {
-      return res.status(400).json({ message: "Please enter all fields" });
-    }
-    //check if email is already existed
-    const existingUser = await userModel.findOne({ email });
+app.use("/user", registerRoute)
+app.use('user', loginRoute);
+app.use('user', updateRoute);
 
-    if (existingUser) {
-      return res.status(400).send({
-        message: "Email already existed.",
-      });
-    }
 
-    const User = await userModel.create({ name, email, password });
-    //token
-    const token = User.createJWT(); //i dont think it makes any sense
-    res.send({ message: "User created sucessfully", User, token });
-  } catch (error) {
-    next(error);
-  }
-});
-
-app.post("/login", async (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password) {
-    res.send({ message: "Enter email and password" });
-  }
-  const user = await userModel.findOne({ email });
-  if (!user) {
-    res.status(400).json({ message: "wrong email" });
-  }
-  // console.log(user.password);
-
-  const isMatch = await user.comparePassword(password);
-  // console.log(isMatch);
-  if (!isMatch) {
-    res.status(400).json({ message: "wrong password" ,
-      status:400,
-    });
-    return;
-  }
-  user.password = undefined; // it is done to hide password from log to make secure
-  const token = user.createJWT();
-  res.status(200).json({
-    message: "Login Sucessful ",
-    user,
-    token,
-    status:200
-  });
-});
+//job routes
 
 /*
 app.put("/update", userAuth, async (req, res) => {
@@ -110,39 +65,6 @@ app.put("/update", userAuth, async (req, res) => {
 
 */
 
-app.put("/update", userAuth, async (req, res) => {
-  //can update by searching name
-  const { name, email, lastName, phoneNo, password } = req.body;
-
-  const user = await userModel.findOne({ _id: req.user.userId });
-
-  if (!user) {
-    return res.status(404).json({ message: "User not found" });
-  }
-  if (name) user.name = name;
-  if (email) user.email = email;
-  if (lastName) user.lastName = lastName;
-  if (phoneNo) user.phoneNo = phoneNo;
-  if (password) user.password = password;
-
-  await user.save();
-  const token = user.createJWT();
-  // console.log(user);
-
-  res.status(200).json({
-    message: "sucessful",
-    user,
-    token,
-  });
-});
-
-// app.get("/protected", userAuth, (req, res) => {
-//   // req.user contains { userId: '...' }
-//   console.log(req.user.userId);
-//   res.status(200).json({ message: "Access granted" });
-// });
-
-//job
 
 app.post("/createjobs", userAuth, async (req, res) => {
   const { company, position } = req.body;
@@ -155,7 +77,6 @@ app.post("/createjobs", userAuth, async (req, res) => {
   const job = await jobModel.create(req.body);
   res.status(200).json({ message: "job created sucessfully", job });
 });
-
 
 app.get("/getalljobs", async (req, res) => {
   //search by query
