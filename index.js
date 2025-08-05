@@ -2,14 +2,10 @@
 import express, { response } from "express";
 import dotenv from "dotenv";
 import cors from "cors";
-import moment from "moment/moment.js";
 
 //import configs
 import connectDB from "./config/mongodb.js";
 
-// import errorMiddleware from "./middleware/errorMiddleware.js";
-import userAuth from "./middleware/userAuth.js";
-import jobModel from "./models/jobModel.js";
 
 //import routes
 import home from "./Routes/home.js";

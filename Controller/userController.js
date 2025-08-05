@@ -9,6 +9,7 @@ class userController {
     const user = await userModel.findOne({ email });
     if (!user) {
       res.status(400).json({ message: "wrong email" });
+      return;
     }
     // console.log(user.password);
 
@@ -60,6 +61,8 @@ class userController {
 
   static async update(req, res, next) {
     //can update by searching name
+    try{
+
     const { name, email, lastName, phoneNo, password } = req.body;
 
     const user = await userModel.findOne({ _id: req.user.userId });
@@ -83,6 +86,10 @@ class userController {
       token,
     });
   }
+  catch(error){
+    next(error)
+  }
+}
 
 
 }
