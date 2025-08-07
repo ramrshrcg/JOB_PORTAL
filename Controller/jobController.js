@@ -70,7 +70,13 @@ class jobController {
 
   static async allJobs(req, res, next) {
     try {
-      const jobs = await jobModel.find();
+      const jobs = await jobModel.find({})
+     .select("company position workType workLocation");
+
+      if (!jobs || jobs.length === 0) {
+        return res.status(404).json({ message: "No jobs found" });
+      }
+
       res.status(200).json({ message: "All jobs fetched successfully", jobs });
     } catch (error) {
       next(error);
