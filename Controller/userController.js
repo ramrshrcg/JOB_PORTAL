@@ -2,31 +2,36 @@ import userModel from "../models/userModel.js";
 
 class userController {
   static async login(req, res, next) {
-    const { email, password } = req.body;
-    if (!email || !password) {
-      res.send({ message: "Enter email and password" });
-    }
-    const user = await userModel.findOne({ email });
-    if (!user) {
-      res.status(400).json({ message: "wrong email" });
-      return;
-    }
-    // console.log(user.password);
+    try{
 
-    const isMatch = await user.comparePassword(password);
-    // console.log(isMatch);
-    if (!isMatch) {
-      res.status(400).json({ message: "wrong password", status: 400 });
-      return;
+      const { email, password } = req.body;
+      if (!email || !password) {
+        res.send({ message: "Enter email and password" });
+      }
+      const user = await userModel.findOne({ email });
+      if (!user) {
+        res.status(400).json({ message: "wrong email" });
+        return;
+      }
+      // console.log(user.password);
+      
+      const isMatch = await user.comparePassword(password);
+      // console.log(isMatch);
+      if (!isMatch) {
+        res.status(400).json({ message: "wrong password", status: 400 });
+        return;
+      }
+      user.password = undefined; // it is done to hide password from log to make secure
+      const token = user.createJWT();
+      res.status(200).json({
+        message: "Login Sucessful ",
+        user,
+        token,
+        status: 200,
+      });
+    }catch(error){
+      next(error)
     }
-    user.password = undefined; // it is done to hide password from log to make secure
-    const token = user.createJWT();
-    res.status(200).json({
-      message: "Login Sucessful ",
-      user,
-      token,
-      status: 200,
-    });
   }
 
   static async register(req, res, next) {

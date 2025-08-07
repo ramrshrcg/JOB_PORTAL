@@ -2,15 +2,21 @@ import jobModel from "../models/jobModel.js";
 
 class jobController {
   static async createJob(req, res, next) {
-    const { company, position } = req.body;
-    if (!company || !position) {
-      next("Please Provide All Fields");
+    try{
+
+      const { company, position } = req.body;
+      if (!company || !position) {
+        console.log("Please provide all fields");
+        next("Please Provide All next Fields");
+      }
+      
+      req.body.createdBy = req.user.userId;
+      
+      const job = await jobModel.create(req.body);
+      res.status(200).json({ message: "job created sucessfully", job });
+    } catch (error) {
+      next(error);
     }
-
-    req.body.createdBy = req.user.userId;
-
-    const job = await jobModel.create(req.body);
-    res.status(200).json({ message: "job created sucessfully", job });
   }
 
   static async viewJobs(req, res, next) {

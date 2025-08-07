@@ -3,6 +3,3 @@ const homeController = (req, res) => {
 };
 
 export default homeController;
-// app.get("/", (req, res) => {
-//   res.send("<h1>welcome to job portal</h1>");
-// });

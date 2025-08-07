@@ -1,4 +1,5 @@
 import JWT from "jsonwebtoken";
+// import errorMiddleware from "./errorMiddleware";
 
 const userAuth = async (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -17,6 +18,7 @@ const userAuth = async (req, res, next) => {
     next();
   } catch (error) {
     return res.status(500).json({ message: error });
+    // errorMiddleware(error, req, res, next);
   }
 
 }
