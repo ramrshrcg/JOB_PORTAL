@@ -5,8 +5,7 @@ class jobController {
     try {
       const { company, position } = req.body;
       if (!company || !position) {
-        console.log("Please provide all fields");
-        next("Please Provide All next Fields");
+        next("Please Provide All  Fields");
       }
 
       req.body.createdBy = req.user.userId;
@@ -110,7 +109,7 @@ class jobController {
       next(error);
     }
   }
-  
+
   static async deleteJob(req, res, next) {
     try {
       const { id } = req.params;
